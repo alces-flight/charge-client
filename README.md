@@ -1,22 +1,12 @@
-# %PROJECT%
+# Charge CLI
 
-%SUMMARY%
-
-## Overview
-
-What is it?
+View and spend compute available Alces Fligtht Center compute credits
 
 ## Installation
 
-How is it installed?
-
 ## Configuration
 
-Any required or optional configuration?
-
 ## Operation
-
-How do you use it?
 
 # Contributing
 
@@ -38,7 +28,7 @@ or alternative license terms made available by Alces Flight Ltd -
 please direct inquiries about licensing to
 [licensing@alces-flight.com](mailto:licensing@alces-flight.com).
 
-%PROJECT% is distributed in the hope that it will be
+Charge CLI is distributed in the hope that it will be
 useful, but WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, EITHER
 EXPRESS OR IMPLIED INCLUDING, WITHOUT LIMITATION, ANY WARRANTIES OR
 CONDITIONS OF TITLE, NON-INFRINGEMENT, MERCHANTABILITY OR FITNESS FOR
