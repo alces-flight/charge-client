@@ -87,7 +87,7 @@ module ChargeClient
         hash = options.__hash__
         hash.delete(:trace)
         begin
-          hash.empty? ? yield(*args) : yield(*args, **hash)
+          hash.empty? ? yield(args) : yield(args, hash)
         rescue Interrupt
           raise RuntimeError, 'Received Interrupt!'
         end
@@ -112,16 +112,33 @@ module ChargeClient
     command 'balance' do |c|
       cli_syntax(c)
       c.summary = 'View the available credit units'
-      c.action do |_a, _o|
-        puts connection.get('/compute-balance').body
+      c.action do
+        puts connection.get('/compute-balance').body['computeUnitBalance']
       end
     end
 
     command 'spend' do |c|
-      cli_syntax(c)
+      cli_syntax(c, 'AMOUNT REASON [PRIVATE_REASON]')
       c.summary = 'Debit credit units from the balance'
       c.action do |args, _|
-        puts 'TODO'
+        payload = { amount: args[0], reason: args[1] }
+        payload[:private_reason] = args[3] if args.length > 2
+        data = connection.post('/compute-balance/consume', consumption: payload).body
+
+        balance = data['computeUnitBalance']
+        credits_required = data['creditsWereRequired']
+
+        if balance < 0
+          $stderr.puts <<~MSG.squish
+            There are no available compute units or service credits to fund
+            this request. Please contact your support team for further assistance.
+          MSG
+        elsif credits_required
+          $stderr.puts <<~MSG
+            Service credit(s) where allocated for use as compute units.
+          MSG
+        end
+        puts balance
       end
     end
   end
