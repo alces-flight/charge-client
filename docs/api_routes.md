@@ -4,7 +4,15 @@ This document contain details on the Alces Flight Center API. This is a small su
 
 The API conforms to the standards as described in [RFC 7231](https://tools.ietf.org/html/rfc7231) but does not conform to a standard REST architecture by design.
 
+## Terminology
+
 The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "SHOULD NOT", "RECOMMENDED", "NOT RECOMMENDED", "MAY", and "OPTIONAL" in this document are to be interpreted as described in [BCP 14](https://tools.ietf.org/html/bcp14) \[[RFC2119](https://tools.ietf.org/html/rfc2119)\] \[[RFC8174](https://tools.ietf.org/html/rfc8174)\] when, and only when, they appear in all capitals, as shown here.
+
+The following terms within this document are to be interpreted as meaning:
+* `compute units` - The main currency that can be spent through this API,
+* `allocate` - The process of redeeming service credit(s) for additional `compute units`,
+* `available credits` - A pool of service credits that a `request` MAY `allocate` via an automated mechanism, and
+* `required credits` - A hypothetical pool of service credits that a request MUST `allocate` to maintain a non-zero `compute unit` balance.
 
 ## URI Leader and Authorization
 
@@ -122,19 +130,19 @@ Type: Integer
 
 *computeUnitBalance*
 
-The remaining number of compute units
+The remaining number of `compute units`
 
 Type: Integer
 
 *creditsWereRequired*
 
-Flags requests where there is insufficient compute units without considering available credits. It MUST be set to `true` if and only if the pre-request `computeUnitBalance` is less than the `amount`.
+Flags the request have a non empty pool of `required credits`. The request MAY `allocate` service credits from the `available credits`.
 
 Type: Boolean
 
 *creditsWereAllAllocated* - __Deprecated__
 
-This flag is ambiguous as it does not refer to the depletion of all "available compute unit credits". Instead it means all the required credits for the request were allocated. Refer to the section below on how to infer this state without using this flag.
+This flag is ambiguous as it does not refer to the depletion of all `available credits`. Instead it means the request SHALL `allocate` all `required credits` from the pool of `available credits`.
 
 This flag MUST NOT be used due to its redundancy and ambiguity.
 
@@ -146,15 +154,15 @@ A error message for why a request failed. It MUST be `null` for all `20x` exit c
 
 Type: String/ null
 
-#### Interpreting `amount` and `creditsWereRequired`
+#### Interpreting `computeUnitBalance` and `creditsWereRequired`
 
-All valid requests fall into one of the following three categories based on the sign of `amount` and whether `creditsWereRequired` has been set.
+All valid requests fall into one of the following three categories based on the sign of `computeUnitBalance` and whether `creditsWereRequired` has been set.
 
-1) Available credits SHALL be allocated to completely satisfy the request if `computeUnitBalance` is non-negative and `creditsWereRequired` is true,
-2) Available credits SHALL NOT be allocated if `computeUnitBalance` is non-negative and `creditsWereRequired` is false,
+1) The request SHALL `allocate` the `required credits` from the `available credits` if `computeUnitBalance` is non-negative and `creditsWereRequired` is true,
+2) The request SHALL NOT `allocate` any `available credits` if `computeUnitBalance` is non-negative and `creditsWereRequired` is false,
 3) Otherwise the following applies:
   * `computeUnitBalance` MUST be negative,
   * `creditsWereRequired` MUST be `true`,
-  * available credits MAY have been allocated, and
-  * there MUST NOT be any remaining available credits.
+  * The request MUST `allocate` all remaining `available credits`, and
+  * The `required credits` MUST NOT been satisfied.
 
