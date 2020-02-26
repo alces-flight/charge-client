@@ -126,20 +126,17 @@ The remaining number of compute units
 
 Type: Integer
 
-*creditsWhereRequired*
+*creditsWereRequired*
 
-Flags requests where there is insufficient compute units without considering service credits. It MUST be set to `true` if and only if the pre-request `computeUnitBalance` is less than the `amount`. This flag MUST NOT be used to determine if the request was successful.
+Flags requests where there is insufficient compute units without considering available credits. It MUST be set to `true` if and only if the pre-request `computeUnitBalance` is less than the `amount`.
 
 Type: Boolean
 
-*creditsWhereAllAllocated*
+*creditsWereAllAllocated* - __Deprecated__
 
-Flags if the compute unit commitment credits allocated this month increased as a result of this request.  The following conditions apply:
-* It MUST be `true` if the increase was successfully,
-* It MUST be `false` if the increase failed due to no remaining unallocated  credits in the compute unit commitment, and
-* It SHOULD be `null` in all other cases.
+This flag is ambiguous as it does not refer to the depletion of all "available compute unit credits". Instead it means all the required credits for the request were allocated. Refer to the section below on how to infer this state without using this flag.
 
-NOTE: `creditWhereAllAllocated` is a misnomer, it does not indicate all the credits where allocated. Instead it indicates at least one credit was allocated.
+This flag MUST NOT be used due to its redundancy and ambiguity.
 
 Type: Boolean/ null
 
@@ -149,106 +146,15 @@ A error message for why a request failed. It MUST be `null` for all `20x` exit c
 
 Type: String/ null
 
-#### Request Examples
+#### Interpreting `amount` and `creditsWereRequired`
 
-The following is an example of a successful request:
+All valid requests fall into one of the following three categories based on the sign of `amount` and whether `creditsWereRequired` has been set.
 
-```
-POST :leader/compute-balance/consume
-Authorization: Bearer <token>
-Accepts: application/json
-
-{
-  "consumption": {
-    "reason": "Work has been done",
-    "private_reason": "This field is optional",
-    "amount": 10
-  }
-}
-
-HTTP/1.1 200 OK
-Content-Type: application/json
-
-{
-  "computeUnitBalance": 90,
-  "creditWasRequired": false,
-  "creditWasAllocated": null,
-  "errors": null
-}
-```
-
-The request MAY still succeed if there was insufficient compute units. This requires the conversion service credits to compute units:
-
-```
-POST :leader/compute-balance/consume
-Authorization: Bearer <token>
-Accepts: application/json
-
-{
-  "consumption": {
-    "reason": "This request will implicitly convert service credits to compute units",
-    "amount": 1000
-  }
-}
-
-HTTP/1.1 200 OK
-Content-Type: application/json
-
-{
-  "computeUnitBalance": 10,
-  "creditWasRequired": true,
-  "creditWasAllocated": true,
-  "errors": null
-}
-```
-
-A similar request MAY fail if there is insufficient service credits to convert:
-
-```
-POST :leader/compute-balance/consume
-Authorization: Bearer <token>
-Accepts: application/json
-
-{
-  "consumption": {
-    "reason": "There are no longer any more service credits to convert",
-    "amount": 1000
-  }
-}
-
-HTTP/1.1 400 BAD REQUEST
-Content-Type: application/json
-
-{
-  "computeUnitBalance": 10,
-  "creditWasRequired": true,
-  "creditWasAllocated": false,
-  "errors": "<non standardised error message describe insufficient service credits>"
-}
-```
-
-In addition to insufficient compute unit and service credits, the request MAY fail:
-
-```
-POST :leader/compute-balance/consume
-Authorization: Bearer <token>
-Accepts: application/json
-
-{
-  "consumption": {
-    "reason": "There are in sufficient compute units for this request",
-    "amount": 1000
-  }
-}
-
-HTTP/1.1 400 BAD REQUEST
-Content-Type: application/json
-
-{
-  "computeUnitBalance": 10,
-  "creditWasRequired": true,
-  "creditWasAllocated": null,
-  "errors": "<non standardised generic error message>"
-}
-```
+1) Available credits SHALL be allocated to completely satisfy the request if `computeUnitBalance` is non-negative and `creditsWereRequired` is true,
+2) Available credits SHALL NOT be allocated if `computeUnitBalance` is non-negative and `creditsWereRequired` is false,
+3) Otherwise the following applies:
+  * `computeUnitBalance` MUST be negative,
+  * `creditsWereRequired` MUST be `true`,
+  * available credits MAY have been allocated, and
+  * there MUST NOT be any remaining available credits.
 
