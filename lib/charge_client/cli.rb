@@ -28,6 +28,7 @@
 #==============================================================================
 
 require 'commander'
+require 'faraday'
 
 module ChargeClient
   VERSION = '0.1.0'
@@ -52,6 +53,22 @@ module ChargeClient
       command.syntax = <<~SYNTAX.chomp
         #{program(:name)} #{command.name} #{args_str}
       SYNTAX
+    end
+
+    def self.action(command)
+      command.action do |args, options|
+        hash = options.__hash__
+        hash.delete(:trace)
+        begin
+          hash.empty? ? yield(*args) : yield(*args, **hash)
+        rescue Interrupt
+          raise RuntimeError, 'Received Interrupt!'
+        end
+      end
+    end
+
+    def connection
+      @connection ||= Faraday
     end
 
     command 'balance' do |c|
