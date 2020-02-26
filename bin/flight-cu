@@ -1,3 +1,4 @@
+#!/usr/bin/env ruby
 # frozen_string_literal: true
 
 #==============================================================================
@@ -27,19 +28,9 @@
 # https://github.com/alces-flight/charge-client
 #==============================================================================
 
-source "https://rubygems.org"
+require 'rake'
+load File.expand_path('../Rakefile', __dir__)
 
-git_source(:github) {|repo_name| "https://github.com/#{repo_name}" }
+Rake::Task[:require].invoke
 
-gem 'activesupport'
-gem 'commander-openflighthpc'
-gem 'faraday'
-gem 'hashie'
-gem 'rake'
-gem 'tty-table'
-
-group :development do
-  gem 'pry'
-  gem 'pry-byebug'
-end
-
+ChargeClient::CLI.run! if $PROGRAM_NAME == __FILE__

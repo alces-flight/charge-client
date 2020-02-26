@@ -27,19 +27,48 @@
 # https://github.com/alces-flight/charge-client
 #==============================================================================
 
-source "https://rubygems.org"
+require 'commander'
 
-git_source(:github) {|repo_name| "https://github.com/#{repo_name}" }
+module ChargeClient
+  VERSION = '0.1.0'
 
-gem 'activesupport'
-gem 'commander-openflighthpc'
-gem 'faraday'
-gem 'hashie'
-gem 'rake'
-gem 'tty-table'
+  class CLI
+    extend Commander::Delegates
 
-group :development do
-  gem 'pry'
-  gem 'pry-byebug'
+    program :name, 'flight-cu'
+    program :version, ChargeClient::VERSION
+    program :description, 'Charges compute units for work done'
+    program :help_paging, false
+
+    silent_trace!
+
+    def self.run!
+      ARGV.push '--help' if ARGV.empty?
+      super
+    end
+
+    def self.cli_syntax(command, args_str = '')
+      command.hidden = true if command.name.split.length > 1
+      command.syntax = <<~SYNTAX.chomp
+        #{program(:name)} #{command.name} #{args_str}
+      SYNTAX
+    end
+
+    command 'balance' do |c|
+      cli_syntax(c)
+      c.summary = 'View the available credit units'
+      c.action do |_a, _o|
+        puts 'TODO'
+      end
+    end
+
+    command 'spend' do |c|
+      cli_syntax(c)
+      c.summary = 'Debit credit units from the balance'
+      c.action do |args, opts|
+        puts 'TODO'
+      end
+    end
+  end
 end
 

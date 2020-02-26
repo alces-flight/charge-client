@@ -40,7 +40,7 @@ task :require do
 
   require 'charge_client/config'
 
-  if RenderClient::Config::Cache.debug?
+  if ChargeClient::Config::Cache.debug?
     require 'pry'
     require 'pry-byebug'
   end
