@@ -126,19 +126,20 @@ The remaining number of compute units
 
 Type: Integer
 
-*creditWasRequired*
+*creditsWhereRequired*
 
-Flags requests where there is insufficient compute units without considering service credits. It MUST be set to `true` if and only if the pre-request `computeUnitBalance` is less than the `amount`. This flag MUST NOT be used to determine if the requests was successful.
+Flags requests where there is insufficient compute units without considering service credits. It MUST be set to `true` if and only if the pre-request `computeUnitBalance` is less than the `amount`. This flag MUST NOT be used to determine if the request was successful.
 
 Type: Boolean
 
-*creditWasAllocated*
+*creditsWhereAllAllocated*
 
-Flags if a service credit was converted into compute units. The following conditions apply:
-* It MUST be `true` if a service credit was successfully converted to compute unit and the response MUST be `200 OK`,
-* It MUST be `false` if there are insufficient service credits to convert and the response MUST be `400 Bad Request`,
-* It MUST be `null` if `creditWasRequired` is `false` and the response SHOULD be `200 OK`,
-* It SHOULD be `null` in all other cases and the response SHOULD be `400 Bad Request`.
+Flags if the compute unit commitment credits allocated this month increased as a result of this request.  The following conditions apply:
+* It MUST be `true` if the increase was successfully,
+* It MUST be `false` if the increase failed due to no remaining unallocated  credits in the compute unit commitment, and
+* It SHOULD be `null` in all other cases.
+
+NOTE: `creditWhereAllAllocated` is a misnomer, it does not indicate all the credits where allocated. Instead it indicates at least one credit was allocated.
 
 Type: Boolean/ null
 
