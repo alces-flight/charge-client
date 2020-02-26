@@ -65,7 +65,7 @@ module ChargeClient
     command 'spend' do |c|
       cli_syntax(c)
       c.summary = 'Debit credit units from the balance'
-      c.action do |args, opts|
+      c.action do |args, _|
         puts 'TODO'
       end
     end
