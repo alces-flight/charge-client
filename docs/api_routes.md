@@ -164,5 +164,5 @@ All valid requests fall into one of the following three categories based on the 
   * `computeUnitBalance` MUST be negative,
   * `creditsWereRequired` MUST be `true`,
   * The request MUST `allocate` all remaining `available credits`, and
-  * The `required credits` MUST NOT been satisfied.
+  * The `required credits` MUST NOT be satisfied.
 

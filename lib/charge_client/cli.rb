@@ -111,7 +111,7 @@ module ChargeClient
 
     command 'balance' do |c|
       cli_syntax(c)
-      c.summary = 'View the available credit units'
+      c.summary = 'View the available compute units'
       c.action do
         puts connection.get('/compute-balance').body['computeUnitBalance']
       end
@@ -119,7 +119,7 @@ module ChargeClient
 
     command 'spend' do |c|
       cli_syntax(c, 'AMOUNT REASON [PRIVATE_REASON]')
-      c.summary = 'Debit credit units from the balance'
+      c.summary = 'Debit compute units from the balance'
       c.action do |args, _|
         payload = { amount: args[0], reason: args[1] }
         payload[:private_reason] = args[3] if args.length > 2
