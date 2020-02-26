@@ -34,13 +34,27 @@ require 'faraday_middleware'
 module ChargeClient
   VERSION = '0.1.0'
 
-  class ServerError < StandardError; end
+  class BaseError < StandardError; end
+  class ServerError < BaseError; end
+  class ClientError < BaseError; end
 
-  class HandleServerErrors < Faraday::Middleware
+  class HandleErrors < Faraday::Middleware
     def call(env)
       @app.call(env).tap do |res|
         raise ServerError, <<~ERROR.chomp if res.status >= 500
           Unrecoverable server-side error encountered (#{res.status})
+        ERROR
+        raise ClientError, <<~ERROR.chomp if res.status == 401
+          Could not valididate the access token. Please check the 'jwt_token' and try again
+        ERROR
+        raise ClientError, <<~ERROR.chomp if res.status == 403
+          You are not authorized to access this content
+        ERROR
+        raise ClientError, <<~ERROR.chomp if res.status > 400
+          An unexpected error has occurred (#{res.status})
+        ERROR
+        raise ServerError, <<~ERROR.chomp unless res.headers['CONTENT-TYPE'] =~ /application\/json/
+          Bad response format received from server
         ERROR
       end
     end
@@ -90,7 +104,7 @@ module ChargeClient
       ) do |conn|
         conn.request :json
         conn.response :json, content_type: 'application/json'
-        conn.use HandleServerErrors
+        conn.use HandleErrors
         conn.adapter :net_http
       end
     end
