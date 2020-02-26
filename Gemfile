@@ -34,6 +34,7 @@ git_source(:github) {|repo_name| "https://github.com/#{repo_name}" }
 gem 'activesupport'
 gem 'commander-openflighthpc'
 gem 'faraday'
+gem 'faraday_middleware'
 gem 'hashie'
 gem 'rake'
 gem 'tty-table'

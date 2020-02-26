@@ -29,9 +29,22 @@
 
 require 'commander'
 require 'faraday'
+require 'faraday_middleware'
 
 module ChargeClient
   VERSION = '0.1.0'
+
+  class ServerError < StandardError; end
+
+  class HandleServerErrors < Faraday::Middleware
+    def call(env)
+      @app.call(env).tap do |res|
+        raise ServerError, <<~ERROR.chomp if res.status >= 500
+          Unrecoverable server-side error encountered (#{res.status})
+        ERROR
+      end
+    end
+  end
 
   class CLI
     extend Commander::Delegates
@@ -67,15 +80,26 @@ module ChargeClient
       end
     end
 
-    def connection
-      @connection ||= Faraday
+    def self.connection
+      @connection ||= Faraday.new(
+        Config::Cache.base_url,
+        headers: {
+          'Authorization' => "Bearer #{Config::Cache.jwt_token}",
+          'Accept' => "application/json"
+        }
+      ) do |conn|
+        conn.request :json
+        conn.response :json, content_type: 'application/json'
+        conn.use HandleServerErrors
+        conn.adapter :net_http
+      end
     end
 
     command 'balance' do |c|
       cli_syntax(c)
       c.summary = 'View the available credit units'
       c.action do |_a, _o|
-        puts 'TODO'
+        puts connection.get('/compute-balance').body
       end
     end
 
