@@ -32,7 +32,7 @@ require 'faraday'
 require 'faraday_middleware'
 
 module ChargeClient
-  VERSION = '0.1.0'
+  VERSION = '0.1.1'
 
   class BaseError < StandardError; end
   class ServerError < BaseError; end
@@ -125,10 +125,13 @@ module ChargeClient
         payload[:private_reason] = args[3] if args.length > 2
         data = connection.post('/compute-balance/consume', consumption: payload).body
 
+        error = data['error']
         balance = data['computeUnitBalance']
         credits_required = data['creditsWereRequired']
 
-        if balance < 0
+        if error
+          raise ClientError, error
+        elsif balance < 0
           $stderr.puts <<~MSG.squish
             There are no available compute units or service credits to fund
             this request. Please contact your support team for further assistance.
