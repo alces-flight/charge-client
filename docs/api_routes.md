@@ -152,6 +152,8 @@ Type: Boolean/ null
 
 A error message for why a request failed. It MUST be `null` for all `20x` exit codes. It SHOULD contain a string for all `40x` exit codes.
 
+BUG NOTICE: The `error` key maybe set even if the response is `200 OK` and this may change without notice. The presence of an error message indicates a client error has occurred.
+
 Type: String/ null
 
 #### Interpreting `computeUnitBalance` and `creditsWereRequired`

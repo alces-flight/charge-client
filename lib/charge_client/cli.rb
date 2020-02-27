@@ -50,7 +50,7 @@ module ChargeClient
         raise ClientError, <<~ERROR.chomp if res.status == 403
           You are not authorized to access this content
         ERROR
-        raise ClientError, <<~ERROR.chomp if res.status >= 400
+        raise ClientError, <<~ERROR.chomp if res.status > 400
           An unexpected error has occurred (#{res.status})
         ERROR
         raise ServerError, <<~ERROR.chomp unless res.headers['CONTENT-TYPE'] =~ /application\/json/
@@ -125,10 +125,13 @@ module ChargeClient
         payload[:private_reason] = args[3] if args.length > 2
         data = connection.post('/compute-balance/consume', consumption: payload).body
 
+        error = data['error']
         balance = data['computeUnitBalance']
         credits_required = data['creditsWereRequired']
 
-        if balance < 0
+        if error
+          raise ClientError, error
+        elsif balance < 0
           $stderr.puts <<~MSG.squish
             There are no available compute units or service credits to fund
             this request. Please contact your support team for further assistance.
