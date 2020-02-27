@@ -46,7 +46,7 @@ get_latest_release() {
 # Sets all the install variables
 CHARGE_CLIENT_BRANCH="${CHARGE_CLIENT_BRANCH:-$(get_latest_release)}"
 CHARGE_CLIENT_URL="${CHARGE_CLIENT_URL:-https://center.alces-flight.com}"
-CHARGE_CLIENT_DIR="${CHARGE_CLIENT_DIR:-/opt/flight/opt/charge-client}"
+CHARGE_CLIENT_INSTALL_DIR="${CHARGE_CLIENT_INSTALL_DIR:-/opt/flight/opt}"
 
 # Error if the JWT is missing
 if [ -z "$CHARGE_CLIENT_JWT" ]; then
@@ -55,8 +55,8 @@ if [ -z "$CHARGE_CLIENT_JWT" ]; then
 fi
 
 # Moves to the directory
-mkdir -p $CHARGE_CLIENT_DIR
-cd $CHARGE_CLIENT_DIR
+mkdir -p $CHARGE_CLIENT_INSTALL_DIR
+cd $CHARGE_CLIENT_INSTALL_DIR
 
 # Clone the repository and select the branch
 git clone https://github.com/alces-flight/charge-client
@@ -75,5 +75,5 @@ EOF
 
 # Notify the install completed
 echo Successfully installed flight-cu. Please add the following to your ~/.bashrc
-echo export PATH=\$PATH:$CHARGE_CLIENT_DIR/charge-client/bin
+echo export PATH=\$PATH:$CHARGE_CLIENT_INSTALL_DIR/charge-client/bin
 
