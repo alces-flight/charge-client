@@ -162,7 +162,7 @@ All valid requests fall into one of the following three categories based on the 
 
 1) The request SHALL NOT `allocate` any service credits and `creditsWereAllAllocated` SHALL NOT be true if `computeUnitBalance` is non-negative and `creditsWereRequired` is false,
 2) The request SHALL `allocate` the `required credits` from the `available credits` and `creditsWereAllAllocated` SHALL be true if `computeUnitBalance` is non-negative and `creditsWereRequired` is true,
-3) The request MAY `allocate` service credits, SHALL `allocate` all remaining `available credits`, `creditsWereRequired` SHALL be true, `creditsWereAllAllocated` SHALL NOT be true, and `computeUnitBalance` SHALL be negative.
+3) Otherwise the request MAY `allocate` service credits, SHALL `allocate` all remaining `available credits`, `creditsWereRequired` SHALL be true, `creditsWereAllAllocated` SHALL NOT be true, and `computeUnitBalance` SHALL be negative.
 
 #### Example Requests
 
