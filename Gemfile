@@ -36,7 +36,6 @@ gem 'commander-openflighthpc'
 gem 'faraday'
 gem 'faraday_middleware'
 gem 'hashie'
-gem 'rake'
 gem 'tty-table'
 
 group :development do
