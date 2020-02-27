@@ -62,7 +62,7 @@ cd $CHARGE_CLIENT_DIR
 git clone https://github.com/alces-flight/charge-client
 cd charge-client
 git fetch
-git clone $CHARGE_CLIENT_BRANCH
+git checkout $CHARGE_CLIENT_BRANCH
 
 # Install the gem dependencies
 bundle install --without development test pry --with default --path vendor
