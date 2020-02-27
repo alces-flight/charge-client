@@ -47,7 +47,6 @@ get_latest_release() {
 CHARGE_CLIENT_BRANCH="${CHARGE_CLIENT_BRANCH:-$(get_latest_release)}"
 CHARGE_CLIENT_URL="${CHARGE_CLIENT_URL:-https://center.alces-flight.com}"
 CHARGE_CLIENT_DIR="${CHARGE_CLIENT_DIR:-/opt/flight/opt/charge-client}"
-CHARGE_CLIENT_JWT="${CHARGE_CLIENT_JWT:-"$1"}"
 
 # Error if the JWT is missing
 if [ -z "$CHARGE_CLIENT_JWT" ]; then
@@ -63,7 +62,7 @@ cd $CHARGE_CLIENT_DIR
 git clone https://github.com/alces-flight/charge-client
 cd charge-client
 git fetch
-git $CHARGE_CLIENT_BRANCH
+git clone $CHARGE_CLIENT_BRANCH
 
 # Install the gem dependencies
 bundle install --without development test pry --with default --path vendor
