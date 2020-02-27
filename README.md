@@ -17,7 +17,7 @@ The following are required to run this application:
 Start by cloning the repo, adding the binaries to your path, and install the gems:
 
 ```
-git clone https://github.com/openflighthpc/charge-client
+git clone https://github.com/alces-flight/charge-client
 cd charge-client
 bundle install --without development test --path vendor
 ```
