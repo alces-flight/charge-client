@@ -50,7 +50,7 @@ module ChargeClient
         raise ClientError, <<~ERROR.chomp if res.status == 403
           You are not authorized to access this content
         ERROR
-        raise ClientError, <<~ERROR.chomp if res.status > 400
+        raise ClientError, <<~ERROR.chomp if res.status >= 400
           An unexpected error has occurred (#{res.status})
         ERROR
         raise ServerError, <<~ERROR.chomp unless res.headers['CONTENT-TYPE'] =~ /application\/json/
