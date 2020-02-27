@@ -74,6 +74,14 @@ jwt_token: $CHARGE_CLIENT_JWT
 EOF
 
 # Notify the install completed
-echo Successfully installed flight-cu. Please add the following to your ~/.bashrc
-echo export PATH=\$PATH:$CHARGE_CLIENT_INSTALL_DIR/charge-client/bin
+echo
+cat << EOF
+
+============================================================================
+Successfully installed flight-cu. Please add the following to your ~/.bashrc
+
+export PATH=\$PATH:$CHARGE_CLIENT_INSTALL_DIR/charge-client/bin
+============================================================================
+
+EOF
 

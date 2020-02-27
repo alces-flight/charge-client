@@ -12,7 +12,24 @@ The following are required to run this application:
 * Ruby:   2.6+
 * Bundler
 
-### Manual installation
+### Bootstrap Installation
+
+The following can be used to quickly install charge client with a single `curl`. It assumes that an appropriate version of `git`, `ruby`, and `bundle` are available on the path. Without these applications the boot-strapping script will fail. Ruby can be installed using [flight runway](https://github.com/openflighthpc/flight-runway) or [rvm](https://rvm.io/).
+
+The script will automatically configure the application to connect to the remote service. The only required configuration parameter is the `CHARGE_CLIENT_JWT` which will be used to set the authorization token. Please contact the Alces Flight Center support team on how to generate this token.
+
+```
+curl https://raw.githubusercontent.com/alces-flight/charge-client/master/scripts/bootstrap.sh | CHARGE_CLIENT_JWT=<token> bash
+```
+
+This script may be customised with various configuration parameters as follows:
+* `CHARGE_CLIENT_BRANCH`:       The branch/ tag to install  Default: The lastest release (not master)
+* `CHARGE_CLIENT_URL`:          The API base URL            Default: https://center.alces-flight.com
+* `CHARGE_CLIENT_INSTALL_DIR`:  The install directory       Default: /opt/flight/opt
+
+These parameters are solely used by the bootstrapping script and are not required by the main application.
+
+### Manual Installation
 
 Start by cloning the repo, adding the binaries to your path, and install the gems:
 
