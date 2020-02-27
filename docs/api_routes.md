@@ -12,7 +12,7 @@ The following terms within this document are to be interpreted as meaning:
 * `compute units` - The main currency that can be spent through this API,
 * `allocate` - The process of redeeming service credit(s) for additional `compute units`,
 * `available credits` - A pool of service credits that a `request` MAY `allocate` via an automated mechanism, and
-* `required credits` - A hypothetical pool of service credits that a request MUST `allocate` to maintain a non-zero `compute unit` balance.
+* `required credits` - A hypothetical pool of service credits that a request MUST `allocate` to maintain the minimal non-negative `compute units` balance.
 
 ## URI Leader and Authorization
 
@@ -74,7 +74,7 @@ Type: Integer
 #### Example
 
 ```
-HTTP/1.1 200 OK
+HTTP/2 200 OK
 Content-Type: application/json
 
 {
@@ -136,7 +136,7 @@ Type: Integer
 
 *creditsWereRequired*
 
-Flags the request have a non empty pool of `required credits`. The request MAY `allocate` service credits from the `available credits`.
+Flags the request has a non empty pool of `required credits`. The request MAY `allocate` service credits from the `available credits`.
 
 Type: Boolean
 
@@ -156,13 +156,85 @@ Type: String/ null
 
 #### Interpreting `computeUnitBalance` and `creditsWereRequired`
 
-All valid requests fall into one of the following three categories based on the sign of `computeUnitBalance` and whether `creditsWereRequired` has been set.
+All valid requests fall into one of the following three categories based on the sign of `computeUnitBalance`, and whether `creditsWereRequired` has been set. All the following requests SHALL respond `200 OK`.
 
-1) The request SHALL `allocate` the `required credits` from the `available credits` if `computeUnitBalance` is non-negative and `creditsWereRequired` is true,
-2) The request SHALL NOT `allocate` any `available credits` if `computeUnitBalance` is non-negative and `creditsWereRequired` is false,
-3) Otherwise the following applies:
-  * `computeUnitBalance` MUST be negative,
-  * `creditsWereRequired` MUST be `true`,
-  * The request MUST `allocate` all remaining `available credits`, and
-  * The `required credits` MUST NOT be satisfied.
+1) The request SHALL NOT `allocate` any service credits and `creditsWereAllAllocated` SHALL NOT be true if `computeUnitBalance` is non-negative and `creditsWereRequired` is false,
+2) The request SHALL `allocate` the `required credits` from the `available credits` and `creditsWereAllAllocated` SHALL be true if `computeUnitBalance` is non-negative and `creditsWereRequired` is true,
+3) The request MAY `allocate` service credits, SHALL `allocate` all remaining `available credits`, `creditsWereRequired` SHALL be true, `creditsWereAllAllocated` SHALL NOT be true, and `computeUnitBalance` SHALL be negative.
+
+#### Example Requests
+
+The following is an example of case 1. This is a standard request with sufficient `compute units` so that service credits are not required:
+
+```
+POST :leader/compute-balance/consume
+Authorization: Bearer <token>
+Accepts: application/json
+
+{
+  "consumption": {
+    "reason": "Standard deduction for work done",
+    "private_reason": "This reason is optional",
+    "amount": 2000
+  }
+}
+
+HTTP/2 200 OK
+Content-Type: application/json
+
+{
+  "computeUnitBalance": 8000,
+  "creditsWereRequired": false,
+  "creditsWereAllAllocated": false
+}
+```
+
+The following is an example of case 2 where there are insufficient `compute units`. The request has automatically converted the `required credits` from the `available credits` to keep the `computeUnitBalance` non-negative.
+
+```
+POST :leader/compute-balance/consume
+Authorization: Bearer <token>
+Accepts: application/json
+
+{
+  "consumption": {
+    "reason": "Big job that will consume service credits",
+    "amount": 10000
+  }
+}
+
+HTTP/2 200 OK
+Content-Type: application/json
+
+{
+  "computeUnitBalance": 12000,
+  "creditsWereRequired": true,
+  "creditsWereAllAllocated": true
+}
+```
+
+The following is an example of case 3 where there are insufficient `compute units`. It is not possible to determine if any credits were allocated as part of this request.
+
+```
+POST :leader/compute-balance/consume
+Authorization: Bearer <token>
+Accepts: application/json
+
+{
+  "consumption": {
+    "reason": "Big job with insufficient compute units and service credits",
+    "private_reason": "It is not possible to detmermine if a service credit was allocated",
+    "amount": 10000
+  }
+}
+
+HTTP/2 200 OK
+Content-Type: application/json
+
+{
+  "computeUnitBalance": -4000,
+  "creditsWereRequired": true,
+  "creditsWereAllAllocated": false
+}
+```
 
