@@ -37,6 +37,7 @@ All requests SHOULD set the following headers:
 ```
 Authorization: Bearer <token>
 Accepts: application/json
+Content-Type: application/json
 ```
 
 The `Accepts` header MAY be omitted if `.json` is appended onto the end of any of the URI documented below. The response MUST be `406 Not Acceptable` if the `Accepts` header has been omitted without appending `.json`.
@@ -53,6 +54,7 @@ Retrieve remaining number of compute units
 GET :leader/compute-balance
 Authorization: Bearer <token>
 Accepts: application/json
+Content-Type: application/json
 ```
 
 #### Request Elements
@@ -74,6 +76,11 @@ Type: Integer
 #### Example
 
 ```
+GET /compute-balance
+Authorization: Bearer <token>
+Accepts: application/json
+Content-Type: application/json
+
 HTTP/2 200 OK
 Content-Type: application/json
 
@@ -90,6 +97,7 @@ Consume a set number of compute units
 POST :leader/compute-balance/consume
 Authorization: Bearer <token>
 Accepts: application/json
+Content-Type: application/json
 
 {
   "consumption": {
@@ -172,6 +180,7 @@ The following is an example of case 1. This is a standard request with sufficien
 POST :leader/compute-balance/consume
 Authorization: Bearer <token>
 Accepts: application/json
+Content-Type: application/json
 
 {
   "consumption": {
@@ -197,6 +206,7 @@ The following is an example of case 2 where there are insufficient `compute unit
 POST :leader/compute-balance/consume
 Authorization: Bearer <token>
 Accepts: application/json
+Content-Type: application/json
 
 {
   "consumption": {
@@ -221,6 +231,7 @@ The following is an example of case 3 where there are insufficient `compute unit
 POST :leader/compute-balance/consume
 Authorization: Bearer <token>
 Accepts: application/json
+Content-Type: application/json
 
 {
   "consumption": {
