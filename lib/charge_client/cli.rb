@@ -138,6 +138,16 @@ module ChargeClient
         conn.request :json
         conn.response :json, content_type: 'application/json'
         conn.use CustomMiddleware, jwt: Config::Cache.jwt_token
+
+        # Log requests to STDERR in dev mode
+        # TODO: Make this more standard
+        if Config::Cache.debug
+          logger = Logger.new($stderr)
+          logger.level = Logger::DEBUG
+          conn.use Faraday::Response::Logger, logger, { bodies: true } do |l|
+            l.filter(/(Authorization:)(.*)/, '\1 [REDACTED]')
+          end
+        end
         conn.adapter :net_http
       end
     end
