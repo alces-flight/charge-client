@@ -1,5 +1,3 @@
-# frozen_string_literal: true
-
 #==============================================================================
 # Copyright (C) 2020-present Alces Flight Ltd.
 #
@@ -27,20 +25,43 @@
 # https://github.com/alces-flight/charge-client
 #==============================================================================
 
-source "https://rubygems.org"
+require 'tty-prompt'
 
-git_source(:github) {|repo_name| "https://github.com/#{repo_name}" }
+module ChargeClient
+  Configure = Struct.new(:old_jwt, :new_jwt) do
+    def run
+      prompt_for_jwt if $stdout.tty? && !new_jwt
+      data = YAML.load File.read(Config::Cache.path), symbolize_names: true
+      data[:jwt_token] = new_jwt
+      begin
+        File.write(Config::Cache.path, YAML.dump(data))
+      rescue
+        raise BaseError, <<~ERROR.chomp
+          Failed to update the configuration file!
+          Please contact your system administrator for further assistance.
+        ERROR
+      end
+    end
 
-gem 'activesupport'
-gem 'commander-openflighthpc'
-gem 'faraday'
-gem 'faraday_middleware'
-gem 'hashie'
-gem 'tty-table'
-gem 'tty-prompt'
+    def prompt_for_jwt
+      opts = { required: true }.tap { |o| o[:default] = old_jwt_mask if old_jwt_mask }
+      self.new_jwt = prompt.ask 'Alces Flight Center API token:', **opts
+      self.new_jwt = nil if new_jwt == old_jwt_mask
+    end
 
-group :development do
-  gem 'pry'
-  gem 'pry-byebug'
+    def prompt
+      @prompt ||= TTY::Prompt.new
+    end
+
+    def old_jwt_mask
+      @old_jwt_mask ||= if old_jwt.nil?
+        nil
+      elsif old_jwt[-8..-1].nil?
+        ('*' * 24)
+      else
+        ('*' * 24) + old_jwt[-8..-1]
+      end
+    end
+  end
 end
 

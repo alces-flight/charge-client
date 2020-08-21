@@ -31,6 +31,8 @@ require 'commander'
 require 'faraday'
 require 'faraday_middleware'
 
+require_relative 'configure'
+
 module ChargeClient
   VERSION = '0.1.4'
 
@@ -106,6 +108,15 @@ module ChargeClient
         conn.response :json, content_type: 'application/json'
         conn.use HandleErrors
         conn.adapter :net_http
+      end
+    end
+
+    command 'configure' do |c|
+      cli_syntax(c, '[JWT]')
+      c.summary = 'Set the API access token'
+      c.action do |args, _|
+        new_jwt = (args.length > 0 ? args.first : nil)
+        Configure.new(Config::Cache.jwt_token, new_jwt).run
       end
     end
 
