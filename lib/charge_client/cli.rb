@@ -174,7 +174,7 @@ module ChargeClient
       c.summary = 'Debit compute units from the balance'
       c.action do |args, _|
         payload = { amount: args[0], reason: args[1] }
-        payload[:private_reason] = args[3] if args.length > 2
+        payload[:private_reason] = args[2] if args.length > 2
         data = connection.post('/compute-balance/consume', consumption: payload).body
 
         error = data['error']
