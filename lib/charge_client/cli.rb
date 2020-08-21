@@ -100,8 +100,9 @@ module ChargeClient
     extend Commander::Delegates
 
     program :name, 'flight-cu'
+    program :application, 'Flight Compute Units'
     program :version, ChargeClient::VERSION
-    program :description, 'Charges compute units for work done'
+    program :description, 'Manage Alces Flight Center compute unit balance'
     program :help_paging, false
 
     silent_trace!
@@ -163,7 +164,7 @@ module ChargeClient
 
     command 'balance' do |c|
       cli_syntax(c)
-      c.summary = 'View the available compute units'
+      c.summary = 'View available compute unit balance'
       c.action do
         puts connection.get('/compute-balance').body['computeUnitBalance']
       end
