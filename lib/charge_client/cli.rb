@@ -40,9 +40,22 @@ module ChargeClient
   class ServerError < BaseError; end
   class ClientError < BaseError; end
 
-  class HandleErrors < Faraday::Middleware
+  class CustomMiddleware < Faraday::Middleware
+    attr_reader :jwt
+
+    def initialize(app, jwt:)
+      @app = app
+      @jwt = jwt
+    end
+
     def call(env)
+      raise ClientError, <<~ERROR.chomp if jwt.empty?
+        The API access token has not been set! Please set it with:
+        #{Paint["#{CLI.program(:name)} configure JWT", :yellow]}
+      ERROR
+      env.request_headers['Authorization'] = "Bearer #{jwt}"
       @app.call(env).tap do |res|
+        self.check_token if res.status == 404
         raise ServerError, <<~ERROR.chomp if res.status >= 500
           Unrecoverable server-side error encountered (#{res.status})
         ERROR
@@ -57,6 +70,25 @@ module ChargeClient
         ERROR
         raise ServerError, <<~ERROR.chomp unless res.headers['CONTENT-TYPE'] =~ /application\/json/
           Bad response format received from server
+        ERROR
+      end
+    end
+
+    def check_token
+      expiry = begin
+        JWT.decode(jwt, nil, false).first['exp']
+      rescue
+        raise ClientError, <<~ERROR.chomp
+          Your access token appears to be malformed and needs to be regenerated.
+          Please take care when copying the token into the configure command:
+          #{Paint["#{CLI.program(:name)} configure JWT", :yellow]}
+        ERROR
+      end
+
+      if expiry && expiry < Time.now.to_i
+        raise ClientError, <<~ERROR.chomp
+          Your access token has expired! Please regenerate it and run:
+          #{Paint["#{CLI.program(:name)} configure JWT", :yellow]}
         ERROR
       end
     end
@@ -99,14 +131,11 @@ module ChargeClient
     def self.connection
       @connection ||= Faraday.new(
         Config::Cache.base_url,
-        headers: {
-          'Authorization' => "Bearer #{Config::Cache.jwt_token}",
-          'Accept' => "application/json"
-        }
+        headers: { 'Accept' => "application/json" }
       ) do |conn|
         conn.request :json
         conn.response :json, content_type: 'application/json'
-        conn.use HandleErrors
+        conn.use CustomMiddleware, jwt: Config::Cache.jwt_token
         conn.adapter :net_http
       end
     end

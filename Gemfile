@@ -36,6 +36,7 @@ gem 'commander-openflighthpc'
 gem 'faraday'
 gem 'faraday_middleware'
 gem 'hashie'
+gem 'jwt'
 gem 'tty-table'
 gem 'tty-prompt'
 
