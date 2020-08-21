@@ -72,6 +72,8 @@ module ChargeClient
           Bad response format received from server
         ERROR
       end
+    rescue Faraday::ConnectionFailed
+      raise ServerError, 'Unable to connect to the API server'
     end
 
     def check_token
