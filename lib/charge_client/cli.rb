@@ -31,16 +31,31 @@ require 'commander'
 require 'faraday'
 require 'faraday_middleware'
 
+require_relative 'configure'
+
 module ChargeClient
-  VERSION = '0.1.4'
+  VERSION = '1.0.0'
 
   class BaseError < StandardError; end
   class ServerError < BaseError; end
   class ClientError < BaseError; end
 
-  class HandleErrors < Faraday::Middleware
+  class CustomMiddleware < Faraday::Middleware
+    attr_reader :jwt
+
+    def initialize(app, jwt:)
+      @app = app
+      @jwt = jwt
+    end
+
     def call(env)
+      raise ClientError, <<~ERROR.chomp if jwt.empty?
+        The API access token has not been set! Please set it with:
+        #{Paint["#{CLI.program(:name)} configure JWT", :yellow]}
+      ERROR
+      env.request_headers['Authorization'] = "Bearer #{jwt}"
       @app.call(env).tap do |res|
+        self.check_token if res.status == 404
         raise ServerError, <<~ERROR.chomp if res.status >= 500
           Unrecoverable server-side error encountered (#{res.status})
         ERROR
@@ -57,6 +72,27 @@ module ChargeClient
           Bad response format received from server
         ERROR
       end
+    rescue Faraday::ConnectionFailed
+      raise ServerError, 'Unable to connect to the API server'
+    end
+
+    def check_token
+      expiry = begin
+        JWT.decode(jwt, nil, false).first['exp']
+      rescue
+        raise ClientError, <<~ERROR.chomp
+          Your access token appears to be malformed and needs to be regenerated.
+          Please take care when copying the token into the configure command:
+          #{Paint["#{CLI.program(:name)} configure JWT", :yellow]}
+        ERROR
+      end
+
+      if expiry && expiry < Time.now.to_i
+        raise ClientError, <<~ERROR.chomp
+          Your access token has expired! Please regenerate it and run:
+          #{Paint["#{CLI.program(:name)} configure JWT", :yellow]}
+        ERROR
+      end
     end
   end
 
@@ -64,8 +100,9 @@ module ChargeClient
     extend Commander::Delegates
 
     program :name, 'flight-cu'
+    program :application, 'Flight Compute Units'
     program :version, ChargeClient::VERSION
-    program :description, 'Charges compute units for work done'
+    program :description, 'Manage Alces Flight Center compute unit balance'
     program :help_paging, false
 
     silent_trace!
@@ -97,21 +134,37 @@ module ChargeClient
     def self.connection
       @connection ||= Faraday.new(
         Config::Cache.base_url,
-        headers: {
-          'Authorization' => "Bearer #{Config::Cache.jwt_token}",
-          'Accept' => "application/json"
-        }
+        headers: { 'Accept' => "application/json" }
       ) do |conn|
         conn.request :json
         conn.response :json, content_type: 'application/json'
-        conn.use HandleErrors
+        conn.use CustomMiddleware, jwt: Config::Cache.jwt_token
+
+        # Log requests to STDERR in dev mode
+        # TODO: Make this more standard
+        if Config::Cache.debug
+          logger = Logger.new($stderr)
+          logger.level = Logger::DEBUG
+          conn.use Faraday::Response::Logger, logger, { bodies: true } do |l|
+            l.filter(/(Authorization:)(.*)/, '\1 [REDACTED]')
+          end
+        end
         conn.adapter :net_http
+      end
+    end
+
+    command 'configure' do |c|
+      cli_syntax(c, '[JWT]')
+      c.summary = 'Set the API access token'
+      c.action do |args, _|
+        new_jwt = (args.length > 0 ? args.first : nil)
+        Configure.new(Config::Cache.jwt_token, new_jwt).run
       end
     end
 
     command 'balance' do |c|
       cli_syntax(c)
-      c.summary = 'View the available compute units'
+      c.summary = 'View available compute unit balance'
       c.action do
         puts connection.get('/compute-balance').body['computeUnitBalance']
       end
@@ -122,7 +175,7 @@ module ChargeClient
       c.summary = 'Debit compute units from the balance'
       c.action do |args, _|
         payload = { amount: args[0], reason: args[1] }
-        payload[:private_reason] = args[3] if args.length > 2
+        payload[:private_reason] = args[2] if args.length > 2
         data = connection.post('/compute-balance/consume', consumption: payload).body
 
         error = data['error']
