@@ -34,7 +34,7 @@ require 'faraday_middleware'
 require_relative 'configure'
 
 module ChargeClient
-  VERSION = '1.0.0-c1'
+  VERSION = '1.0.0'
 
   class BaseError < StandardError; end
   class ServerError < BaseError; end
