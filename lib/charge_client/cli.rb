@@ -53,9 +53,10 @@ module ChargeClient
         The API access token has not been set! Please set it with:
         #{Paint["#{CLI.program(:name)} configure JWT", :yellow]}
       ERROR
+
       env.request_headers['Authorization'] = "Bearer #{jwt}"
       @app.call(env).tap do |res|
-        self.check_token if res.status == 404
+        check_token if res.status == 404
         raise ServerError, <<~ERROR.chomp if res.status >= 500
           Unrecoverable server-side error encountered (#{res.status})
         ERROR
@@ -68,7 +69,7 @@ module ChargeClient
         raise ClientError, <<~ERROR.chomp if res.status > 400
           An unexpected error has occurred (#{res.status})
         ERROR
-        raise ServerError, <<~ERROR.chomp unless res.headers['CONTENT-TYPE'] =~ /application\/json/
+        raise ServerError, <<~ERROR.chomp unless res.headers['CONTENT-TYPE'] =~ %r{application/json}
           Bad response format received from server
         ERROR
       end
@@ -79,7 +80,7 @@ module ChargeClient
     def check_token
       expiry = begin
         JWT.decode(jwt, nil, false).first['exp']
-      rescue
+      rescue StandardError
         raise ClientError, <<~ERROR.chomp
           Your access token appears to be malformed and needs to be regenerated.
           Please take care when copying the token into the configure command:
@@ -87,36 +88,36 @@ module ChargeClient
         ERROR
       end
 
-      if expiry && expiry < Time.now.to_i
-        raise ClientError, <<~ERROR.chomp
-          Your access token has expired! Please regenerate it and run:
-          #{Paint["#{CLI.program(:name)} configure JWT", :yellow]}
-        ERROR
-      end
+      return unless expiry && expiry < Time.now.to_i
+
+      raise ClientError, <<~ERROR.chomp
+        Your access token has expired! Please regenerate it and run:
+        #{Paint["#{CLI.program(:name)} configure JWT", :yellow]}
+      ERROR
     end
   end
 
-  class CLI
-    extend Commander::Delegates
+  module CLI
+    PROGRAM_NAME = 'flight-cu'
 
-    program :name, 'flight-cu'
+    extend Commander::CLI
+    program :name, PROGRAM_NAME
     program :application, 'Flight Compute Units'
     program :version, ChargeClient::VERSION
     program :description, 'Manage Alces Flight Center compute unit balance'
     program :help_paging, false
 
-    silent_trace!
-
     def self.run!
       ARGV.push '--help' if ARGV.empty?
-      super
+      super(*ARGV)
     end
 
-    def self.cli_syntax(command, args_str = '')
-      command.hidden = true if command.name.split.length > 1
-      command.syntax = <<~SYNTAX.chomp
-        #{program(:name)} #{command.name} #{args_str}
-      SYNTAX
+    def self.cli_syntax(command, args_str = nil)
+      command.syntax = [
+        PROGRAM_NAME,
+        command.name,
+        args_str
+      ].compact.join(' ')
     end
 
     def self.action(command)
@@ -126,7 +127,7 @@ module ChargeClient
         begin
           hash.empty? ? yield(args) : yield(args, hash)
         rescue Interrupt
-          raise RuntimeError, 'Received Interrupt!'
+          raise 'Received Interrupt!'
         end
       end
     end
@@ -134,7 +135,7 @@ module ChargeClient
     def self.connection
       @connection ||= Faraday.new(
         Config::Cache.base_url,
-        headers: { 'Accept' => "application/json" }
+        headers: { 'Accept' => 'application/json' }
       ) do |conn|
         conn.request :json
         conn.response :json, content_type: 'application/json'
@@ -157,7 +158,7 @@ module ChargeClient
       cli_syntax(c, '[JWT]')
       c.summary = 'Set the API access token'
       c.action do |args, _|
-        new_jwt = (args.length > 0 ? args.first : nil)
+        new_jwt = (args.length.positive? ? args.first : nil)
         Configure.new(Config::Cache.jwt_token, new_jwt).run
       end
     end
@@ -184,19 +185,19 @@ module ChargeClient
 
         if error
           raise ClientError, error
-        elsif balance < 0
-          $stderr.puts <<~MSG.squish
+        elsif balance.negative?
+          warn <<~MSG.squish
             There are no available compute units or service credits to fund
             this request. Please contact your support team for further assistance.
           MSG
         elsif credits_required
-          $stderr.puts <<~MSG
+          warn <<~MSG
             Service credit(s) where allocated for use as compute units.
           MSG
         end
+
         puts balance
       end
     end
   end
 end
-

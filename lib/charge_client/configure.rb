@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 #==============================================================================
 # Copyright (C) 2020-present Alces Flight Ltd.
 #
@@ -31,11 +33,11 @@ module ChargeClient
   Configure = Struct.new(:old_jwt, :new_jwt) do
     def run
       prompt_for_jwt if $stdout.tty? && !new_jwt
-      data = YAML.load File.read(Config::Cache.path), symbolize_names: true
+      data = YAML.safe_load File.read(Config::Cache.path), symbolize_names: true
       data[:jwt_token] = new_jwt
       begin
         File.write(Config::Cache.path, YAML.dump(data))
-      rescue
+      rescue StandardError
         raise BaseError, <<~ERROR.chomp
           Failed to update the configuration file!
           Please contact your system administrator for further assistance.
@@ -55,13 +57,12 @@ module ChargeClient
 
     def old_jwt_mask
       @old_jwt_mask ||= if old_jwt.nil?
-        nil
-      elsif old_jwt[-8..-1].nil?
-        ('*' * 24)
-      else
-        ('*' * 24) + old_jwt[-8..-1]
-      end
+                          nil
+                        elsif old_jwt[-8..].nil?
+                          ('*' * 24)
+                        else
+                          ('*' * 24) + old_jwt[-8..]
+                        end
     end
   end
 end
-

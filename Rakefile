@@ -28,7 +28,7 @@
 #==============================================================================
 
 task :require do
-  $: << File.expand_path('lib', __dir__)
+  $LOAD_PATH << File.expand_path('lib', __dir__)
   ENV['BUNDLE_GEMFILE'] ||= File.join(__dir__, 'Gemfile')
 
   require 'rubygems'
@@ -53,4 +53,3 @@ task console: :require do
   require 'pry-byebug'
   binding.pry
 end
-

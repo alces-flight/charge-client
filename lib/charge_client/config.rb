@@ -35,16 +35,14 @@ module ChargeClient
     module Cache
       class << self
         def cache
-          @cache ||=  begin
-            if File.exists? path
-              Config.new(YAML.load(File.read(path), symbolize_names: true))
-            else
-              $stderr.puts <<~ERROR.chomp
-                ERROR: The configuration file does not exist: #{path}
-              ERROR
-              exit 1
-            end
-          end
+          @cache ||= if File.exist?(path)
+                       Config.new(YAML.safe_load(File.read(path), symbolize_names: true))
+                     else
+                       warn <<~ERROR.chomp
+                         ERROR: The configuration file does not exist: #{path}
+                       ERROR
+                       exit 1
+                     end
         end
 
         def path
@@ -66,4 +64,3 @@ module ChargeClient
     end
   end
 end
-
