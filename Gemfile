@@ -27,21 +27,23 @@
 # https://github.com/alces-flight/charge-client
 #==============================================================================
 
-source "https://rubygems.org"
+source 'https://rubygems.org'
 
-git_source(:github) {|repo_name| "https://github.com/#{repo_name}" }
+git_source(:github) { |repo_name| "https://github.com/#{repo_name}" }
 
-gem 'activesupport'
+gem 'activesupport', '~> 7.0.8'
 gem 'commander-openflighthpc'
 gem 'faraday'
 gem 'faraday_middleware'
 gem 'hashie'
 gem 'jwt'
-gem 'tty-table'
+gem 'rake'
+gem 'rubocop'
+gem 'rubocop-rake'
 gem 'tty-prompt'
+gem 'tty-table'
 
 group :development do
   gem 'pry'
   gem 'pry-byebug'
 end
-
