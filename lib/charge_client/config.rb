@@ -36,7 +36,9 @@ module ChargeClient
       class << self
         def cache
           @cache ||= if File.exist?(path)
-                       Config.new(YAML.safe_load(File.read(path), symbolize_names: true))
+                       Config.new(YAML.safe_load(File.read(path), symbolize_names: true)).tap do |c|
+                         c.jwt_token = ENV['JWT_TOKEN'] if ENV['JWT_TOKEN']
+                       end
                      else
                        warn <<~ERROR.chomp
                          ERROR: The configuration file does not exist: #{path}
